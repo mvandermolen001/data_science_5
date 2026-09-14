@@ -77,9 +77,9 @@ class RegressionModel:
         """
 
         number_of_observations = len(self.y)
-        predicted = self.X @ self.theta
+        predicted = self.X @ self.theta.T
         errors = predicted - self.y
-        regularisation = (self.lambda_ / (2 * number_of_observations)) * np.sum(self.theta[1:] ** 2)
+        regularisation = self.lambda_  * np.sum(self.theta[1:] ** 2)
         cost = (1 / (2 * number_of_observations)) * np.sum(errors ** 2) + regularisation
         return cost
 
@@ -97,7 +97,7 @@ class RegressionModel:
         cost_history = np.zeros(self.num_iters)
         number_of_observations = len(self.y)
         for index in range(self.num_iters):
-            predicted = self.X @ self.theta
+            predicted = self.X @ self.theta.T
             errors = predicted - self.y
             gradients = (self.X.T @ errors) / number_of_observations
             # regularisation
