@@ -79,8 +79,8 @@ class RegressionModel:
         number_of_observations = len(self.y)
         predicted = self.X @ self.theta.T
         errors = predicted - self.y
-        regularisation = (self.lambda_/ number_of_observations)  * np.sum(self.theta[1:] ** 2)
-        cost = (1 / (2 * number_of_observations)) * np.sum(errors ** 2) + regularisation
+        regularisation = self.lambda_ * np.sum(self.theta[1:] ** 2)
+        cost = (1 / (2 * number_of_observations)) * (np.sum(errors ** 2) + regularisation)
         return cost
 
     def gradient_descent(self):
