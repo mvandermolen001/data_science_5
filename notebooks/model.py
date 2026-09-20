@@ -1,28 +1,28 @@
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
-class RegressionModel:
-    def __init__(self, data, scale=False, lambda_=0.01,alpha=0.01, num_iters=1000):
+class Regression:
+    def __init__(self, X, y, scale=False, lambda_=0.01,
+                 alpha=0.01, num_iters=1000):
+
         self.scale = scale
-        self.cost_history = None
-        self.data = data
-        self.X, self.y = self.data_preprocessing()
-        self.theta = np.zeros(self.X.shape[1])
-        self.scaler = None
         self.lambda_ = lambda_
         self.alpha = alpha
         self.num_iters = num_iters
 
-    def data_preprocessing(self):
-        m, n = self.data.shape
-        X = self.data.iloc[:, :-1].values
-        X = np.c_[np.ones((m, 1)), X]
-        if self.scale:
-            self.scaler = StandardScaler()
-            X[:, 1:] = self.scaler.fit_transform(X[:, 1:])
-        y = self.data.iloc[:, -1].values
-        return X, y
+        self.cost_history = None
+        self.scaler = None
 
+        self.X, self.y = X, y
+        self.theta = np.zeros(self.X.shape[1])
+
+    def fit(self):
+        raise NotImplementedError
+
+    def predict(self, X):
+        raise NotImplementedError
+
+class LinearRegression(Regression):
     def naive_cost_function(self):
         """
         This method calculates the cost of the current values of theta, that is, the extent to which the
@@ -31,7 +31,7 @@ class RegressionModel:
         :return: cost
         """
         cumulative_cost = 0
-        rows, columns = self.data.shape
+        rows, columns = self.X.shape
         for observation_number in range(0, len(self.X)):
             predicted = sum(value * self.theta[index] for index, value in enumerate(self.X[observation_number]))
             cumulative_cost += (predicted - self.y[observation_number]) ** 2
@@ -77,7 +77,7 @@ class RegressionModel:
         """
 
         number_of_observations = len(self.y)
-        predicted = self.X @ self.theta.T
+        predicted = self.X @ self.theta
         errors = predicted - self.y
         regularisation = self.lambda_ * np.sum(self.theta[1:] ** 2)
         cost = (1 / (2 * number_of_observations)) * (np.sum(errors ** 2) + regularisation)
@@ -97,12 +97,12 @@ class RegressionModel:
         cost_history = np.zeros(self.num_iters)
         number_of_observations = len(self.y)
         for index in range(self.num_iters):
-            predicted = self.X @ self.theta.T
+            predicted = self.X @ self.theta
             errors = predicted - self.y
-            gradients = (self.X.T @ errors) / number_of_observations
+            gradient = (self.X.T @ errors) / number_of_observations
             # regularisation
-            gradients[1:] += (self.lambda_ / number_of_observations) * self.theta[1:]
-            self.theta = self.theta - self.alpha * gradients
+            gradient[1:] += (self.lambda_ / number_of_observations) * self.theta[1:]
+            self.theta = self.theta - self.alpha * gradient
             cost_history[index] = self.compute_cost()
         return cost_history
 
@@ -113,5 +113,77 @@ class RegressionModel:
     def predict(self, X_new):
         if self.scale:
             X_new = self.scaler.transform(X_new)
+        # adds that bias column
         X_new = np.c_[np.ones((X_new.shape[0], 1)), X_new]
         return X_new @ self.theta
+
+class LogisticRegression(Regression):
+    @staticmethod
+    def sigmoid(z):
+        return 1 / (1 + np.exp(-z))
+
+    def compute_cost(self):
+        """
+        Compute cost for logistic regression with regularization.
+
+        Parameters:
+        X:  Input feature matrix (m x n)
+        y: True labels vector (m,)
+        theta: Parameters vector (n,)
+        lambda_: Regularization parameter
+
+        Return:
+        J:Cost value
+        """
+        number_of_observations = len(self.y)
+        h = self.sigmoid(self.X.dot(self.theta))
+        regularisation = (self.lambda_ / (2 * number_of_observations)) * np.sum(self.theta[1:] ** 2)
+        cost = (-1 / number_of_observations) * (self.y.dot(np.log(h)) + (1 - self.y).dot(np.log(1 - h))) + regularisation
+        return cost
+
+    def gradient_descent(self):
+        """
+        Perform gradient descent to find optimal theta.
+
+        Parameters:
+        X: Input feature matrix (m x n)
+        y: True labels vector (m,)
+        theta: Initial parameters vector (n,)
+        alpha: Learning rate
+        num_iters: Number of iterations
+        lambda_:  Regularization parameter
+
+        Return:
+        theta:  Updated parameters vector
+        J_history:  History of cost values
+        """
+        cost_history = np.zeros(self.num_iters)
+        number_of_observations = len(self.y)
+        for index in range(self.num_iters):
+            z = self.X @ self.theta
+            h = self.sigmoid(z)
+            gradient = (self.X.T @ (h - self.y)) / number_of_observations
+            # regularisation
+            gradient[1:] += (self.lambda_ / number_of_observations) * self.theta[1:]
+            self.theta -= self.alpha * gradient
+            cost_history[index] = self.compute_cost()
+        return cost_history
+
+    def predict(self, new_X, threshold=0.5):
+        """
+        Predict whether the label is 0 or 1 using learned logistic regression parameters theta.
+
+        Parameters:
+        X: Input feature matrix (m x n)
+        theta: Parameters vector (n,) (computed by compute cost and gradient descentl)
+        threshold: Threshold for prediction
+
+        Return:
+        p: Predicted labels vector (m,)
+        """
+        z = new_X @ self.theta
+        probabilities = self.sigmoid(z)
+        return probabilities >= threshold
+
+    def predict_proba(self, new_X):
+        return self.sigmoid(new_X @ self.theta)
