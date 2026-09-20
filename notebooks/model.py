@@ -102,7 +102,7 @@ class LinearRegression(Regression):
             gradient = (self.X.T @ errors) / number_of_observations
             # regularisation
             gradient[1:] += (self.lambda_ / number_of_observations) * self.theta[1:]
-            self.theta = self.theta - self.alpha * gradient
+            self.theta -= self.alpha * gradient
             cost_history[index] = self.compute_cost()
         return cost_history
 
@@ -113,13 +113,17 @@ class LinearRegression(Regression):
     def predict(self, X_new):
         if self.scale:
             X_new = self.scaler.transform(X_new)
-        # adds that bias column
-        X_new = np.c_[np.ones((X_new.shape[0], 1)), X_new]
         return X_new @ self.theta
 
 class LogisticRegression(Regression):
     @staticmethod
     def sigmoid(z):
+        """Sigmoid function
+        Parameters:
+            z: numpy array
+        Returns:
+            An array with z fitted to the sigmoid function
+        """
         return 1 / (1 + np.exp(-z))
 
     def compute_cost(self):
@@ -186,4 +190,8 @@ class LogisticRegression(Regression):
         return probabilities >= threshold
 
     def predict_proba(self, new_X):
+        """Predict probabilities using learned logistic regression parameters theta.
+        Parameters:
+        new_X: Input feature matrix (m x n)
+        """
         return self.sigmoid(new_X @ self.theta)
