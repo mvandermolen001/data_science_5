@@ -52,7 +52,7 @@ def scatter(xs, ys, *, model=None):
     fig, ax = plt.subplots(figsize=(6.4, 4.8))
     ylimit = ceil(max(abs(ys.min()), abs(ys.max())))
     data = ax.scatter(x1s,x2s,
-        c=ys,edgecolors="w",
+        c=ys,edgecolors="black",
         cmap=plt.cm.RdYlBu,vmin=-ylimit,
         vmax=ylimit)
 
