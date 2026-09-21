@@ -22,7 +22,7 @@ def scatter(xs, ys, *, model=None):
         True outcomes.
     model : object, optional
         Classification or regression model with a ``predict`` method,
-        and optionally ``predict_proba`` or ``decision_function``.
+        and optionally ``predict_proba``.
     """
     xs = np.asarray(xs)
     ys = np.asarray(ys)
