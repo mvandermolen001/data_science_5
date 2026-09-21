@@ -2,6 +2,19 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 class Regression:
+    """
+    Base class for regression. For regression, the following methods must exist:
+    - fit
+    - predict
+
+    The Regression class has the following attributes:
+    X: The feature matrix
+    y: The true labels
+    scale(boolean): whether to scale the data or not
+    lambda_(float): the lambda parameter for regularization
+    alpha(float): the alpha parameter for the learning rate
+    num_iters(int): number of iterations to optimize the model with
+    """
     def __init__(self, X, y, scale=False, lambda_=0.01,
                  alpha=0.01, num_iters=1000):
 
@@ -19,7 +32,7 @@ class Regression:
     def fit(self):
         raise NotImplementedError
 
-    def predict(self, X):
+    def predict(self, new_X):
         raise NotImplementedError
 
 class LinearRegression(Regression):
@@ -110,10 +123,10 @@ class LinearRegression(Regression):
         self.cost_history = self.gradient_descent()
         return self
 
-    def predict(self, X_new):
+    def predict(self, new_X):
         if self.scale:
-            X_new = self.scaler.transform(X_new)
-        return X_new @ self.theta
+            new_X = self.scaler.transform(new_X)
+        return new_X @ self.theta
 
 class LogisticRegression(Regression):
     @staticmethod
@@ -172,6 +185,10 @@ class LogisticRegression(Regression):
             self.theta -= self.alpha * gradient
             cost_history[index] = self.compute_cost()
         return cost_history
+
+    def fit(self):
+        self.cost_history = self.gradient_descent()
+        return self
 
     def predict(self, new_X, threshold=0.5):
         """
